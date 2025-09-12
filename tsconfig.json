@@ -17,6 +17,49 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "paths": {}
+    "paths": {
+      "@app/auth": [
+        "libs/auth/src"
+      ],
+      "@app/auth/*": [
+        "libs/auth/src/*"
+      ],
+      "@app/database": [
+        "libs/database/src"
+      ],
+      "@app/database/*": [
+        "libs/database/src/*"
+      ],
+      "y/user": [
+        "libs/user/src"
+      ],
+      "y/user/*": [
+        "libs/user/src/*"
+      ],
+      "y/post": [
+        "libs/post/src"
+      ],
+      "y/post/*": [
+        "libs/post/src/*"
+      ],
+      "y/order": [
+        "libs/order/src"
+      ],
+      "y/order/*": [
+        "libs/order/src/*"
+      ],
+      "@app/profile": [
+        "libs/profile/src"
+      ],
+      "@app/profile/*": [
+        "libs/profile/src/*"
+      ],
+      "@app/earn": [
+        "libs/earn/src"
+      ],
+      "@app/earn/*": [
+        "libs/earn/src/*"
+      ]
+    }
   }
 }
