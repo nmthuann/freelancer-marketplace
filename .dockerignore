@@ -1,0 +1,10 @@
+node_modules
+dist
+.dockerignore
+.git
+.vscode
+.env
+.env.local
+**/*.log
+coverage
+tmp

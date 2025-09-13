@@ -9,24 +9,25 @@ import { CreateProfileDetailDto } from './dto/create-profile-detail.dto';
 
 @Injectable()
 export class ProfileService {
-  constructor(
-    @InjectRepository(AccountEntity)
-    private readonly accountRepository: Repository<AccountEntity>,
+  // constructor(
+  //   @InjectRepository(AccountEntity)
+  //   private readonly accountRepository: Repository<AccountEntity>,
 
-    @InjectRepository(UserInformationEntity)
-    private readonly informationRepository: Repository<UserInformationEntity>,
+  //   @InjectRepository(UserInformationEntity)
+  //   private readonly informationRepository: Repository<UserInformationEntity>,
 
-    @InjectRepository(UserProfileEntity)
-    private readonly profileRepo: Repository<UserProfileEntity>,
-  ) {}
+  //   @InjectRepository(UserProfileEntity)
+  //   private readonly profileRepo: Repository<UserProfileEntity>,
+  // ) {}
 
   async getProfiles(): Promise<any[]> {
     // placeholder
     return Promise.resolve([]);
   }
 
-  async getProfileByEmail(email: string): Promise<ProfileDocumentDto | null> {
-    return Promise.resolve(null);
+  async getProfileByEmail(email: string): Promise<string> {
+    console.log(email);
+    return Promise.resolve(email);
   }
 
   async getFreelancerProfileByEmail(

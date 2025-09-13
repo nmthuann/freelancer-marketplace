@@ -1,11 +1,13 @@
 import { ConfigurableModuleBuilder } from '@nestjs/common';
 
 export interface DatabaseModuleOptions {
+  type?: 'mysql' | 'postgres' | 'mariadb';
   host: string;
   port: number;
-  username?: string;
+  username: string;
   password?: string;
-  database?: string;
+  database: string;
+  synchronize?: boolean;
 }
 
 export const {
@@ -14,5 +16,5 @@ export const {
   ASYNC_OPTIONS_TYPE: DatabaseModuleAsyncOptions,
   OPTIONS_TYPE: DatabaseModuleOptionsType,
 } = new ConfigurableModuleBuilder<DatabaseModuleOptions>()
-  .setClassMethodName('forRoot') // => sẽ có DatabaseModule.forRoot / forRootAsync
+  .setClassMethodName('forRoot') // -> DatabaseModule.forRoot / forRootAsync
   .build();

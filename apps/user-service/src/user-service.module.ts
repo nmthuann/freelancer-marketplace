@@ -1,12 +1,39 @@
-import { Module } from '@nestjs/common';
-import { UserServiceController } from './user-service.controller';
-import { UserServiceService } from './user-service.service';
-import { ProfilesModule } from './profiles/profiles.module';
+import { Global, Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 
 @Module({
-  imports: [ProfilesModule, UsersModule],
-  controllers: [UserServiceController],
-  providers: [UserServiceService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
+    }),
+
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get<string>('FREELANCER_MARKETPLACE_USER_DB_HOST'),
+        port: parseInt(
+          config.get<string>('FREELANCER_MARKETPLACE_USER_DB_PORT'),
+          10,
+        ),
+        username: config.get<string>('FREELANCER_MARKETPLACE_USER_DB_USERNAME'),
+        password: config.get<string>('FREELANCER_MARKETPLACE_USER_DB_PASSWORD'),
+        database: config.get<string>(
+          'FREELANCER_MARKETPLACE_USER_DB_DATABASE_NAME',
+        ),
+        synchronize: true,
+      }),
+    }),
+
+    // ProfilesModule,
+
+    UsersModule,
+  ],
+  controllers: [],
+  providers: [],
 })
 export class UserServiceModule {}
