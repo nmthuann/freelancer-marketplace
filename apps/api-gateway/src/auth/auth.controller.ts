@@ -1,3 +1,4 @@
+import { AuthService } from '@app/auth';
 import {
   Body,
   Controller,
@@ -10,7 +11,6 @@ import {
 import { Public } from 'apps/api-gateway/decorators/public.decorator';
 import { AccountPipeValidator } from 'apps/api-gateway/pipes/account.validator.pipe';
 import { AccountRequest } from './requests/account.request';
-import { AuthService } from '@app/auth';
 import { LoginResponse } from './responses/login.response';
 
 @Controller('auth')
@@ -36,7 +36,8 @@ export class AuthController {
   async logout(@Request() req: any) {
     const email = req['email'];
     const token = req['token'];
-    await this.authService.logout(token, email);
+    console.log('token', token);
+    await this.authService.logout(email);
     return { message: 'Ban da dang xuat' };
   }
 }

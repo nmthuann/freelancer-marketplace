@@ -26,9 +26,11 @@
     "@nestjs/core": "^11.0.0",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/microservices": "^11.0.0",
-    "@nestjs/passport": "^11.0.0",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/typeorm": "^11.0.0",
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "passport": "^0.7.0",
@@ -84,9 +86,9 @@
     "moduleNameMapper": {
       "^@app/auth(|/.*)$": "<rootDir>/libs/auth/src/$1",
       "^@app/database(|/.*)$": "<rootDir>/libs/database/src/$1",
-      "^y/user(|/.*)$": "<rootDir>/libs/user/src/$1",
-      "^y/post(|/.*)$": "<rootDir>/libs/post/src/$1",
-      "^y/order(|/.*)$": "<rootDir>/libs/order/src/$1",
+      "^@libs/user(|/.*)$": "<rootDir>/libs/user/src/$1",
+      "^@libs/post(|/.*)$": "<rootDir>/libs/post/src/$1",
+      "^@libs/order(|/.*)$": "<rootDir>/libs/order/src/$1",
       "^@app/profile(|/.*)$": "<rootDir>/libs/profile/src/$1",
       "^@app/earn(|/.*)$": "<rootDir>/libs/earn/src/$1"
     }
