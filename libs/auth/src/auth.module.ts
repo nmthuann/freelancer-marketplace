@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountEntity } from 'libs/user/entities/account.entity';
 import { UserEntity } from 'libs/user/entities/user.entity';
 import { ProfileEntity } from 'libs/user/entities/profile.entity';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { ProfileEntity } from 'libs/user/entities/profile.entity';
           'FREELANCER_MARKETPLACE_USER_DB_DATABASE_NAME',
         ),
         entities: [AccountEntity, UserEntity, ProfileEntity],
-        synchronize: false, // dev mode, prod nên dùng migration
+        synchronize: false,
       }),
     }),
     JwtModule.registerAsync({
@@ -37,7 +38,7 @@ import { ProfileEntity } from 'libs/user/entities/profile.entity';
       }),
     }),
   ],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
