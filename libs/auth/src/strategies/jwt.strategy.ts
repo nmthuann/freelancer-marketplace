@@ -4,7 +4,7 @@ import { PayloadDto } from '../dto/payload.dto';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { AccountEntity } from 'libs/user/entities/account.entity';
+import { AccountEntity } from 'y/user/entities/account.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

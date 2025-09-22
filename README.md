@@ -18,8 +18,11 @@
 
 ## 📖 Description
 
-**Freelancer Marketplace** is a platform that connects freelancers and clients, allowing clients to post jobs and freelancers to offer services.  
-The project is built with **NestJS** using a **microservice architecture**, managed under a **monorepo** structure for scalability and maintainability.
+**Freelancer Marketplace** is a platform that connects freelancers and clients, enabling clients to post jobs and freelancers to offer their services.
+
+The project is built with **NestJS** following a **microservice architecture**, and organized in a **monorepo** structure to ensure scalability and maintainability.
+
+It was **rebuilt from an earlier version developed with the team two years ago**, after recognizing that the original design and coding practices were no longer suitable for current requirements and standards.
 
 ---
 

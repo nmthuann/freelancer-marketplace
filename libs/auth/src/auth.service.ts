@@ -8,12 +8,12 @@ import { JwtService } from '@nestjs/jwt';
 import { TokensDto } from './dto/tokens.dto';
 import * as bcrypt from 'bcrypt';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { AccountEntity } from 'libs/user/entities/account.entity';
+import { AccountEntity } from 'y/user/entities/account.entity';
 import { DataSource } from 'typeorm';
 import { PayloadDto } from './dto/payload.dto';
 import { ConfigService } from '@nestjs/config';
 import { RegisterDto } from './dto/register.dto';
-import { Role } from 'libs/user/enums/role.enum';
+import { Role } from 'y/user/enums/role.enum';
 
 @Injectable()
 export class AuthService {

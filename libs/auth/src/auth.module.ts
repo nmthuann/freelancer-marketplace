@@ -4,9 +4,9 @@ import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AccountEntity } from 'libs/user/entities/account.entity';
-import { UserEntity } from 'libs/user/entities/user.entity';
-import { ProfileEntity } from 'libs/user/entities/profile.entity';
+import { AccountEntity } from 'y/user/entities/account.entity';
+import { UserEntity } from 'y/user/entities/user.entity';
+import { ProfileEntity } from 'y/user/entities/profile.entity';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({

@@ -1,4 +1,4 @@
-import { Role } from 'libs/user/enums/role.enum';
+import { Role } from 'y/user/enums/role.enum';
 
 export type PayloadDto = {
   email: string;

@@ -1,1 +1,8 @@
 15/9/2025 -> complete -> setup Auth Module for API Gateway
+
+
+
+22/9
+    - chưa test user-service
+    - chưa hoàn thành post-service
+    - chưa làm order-service
