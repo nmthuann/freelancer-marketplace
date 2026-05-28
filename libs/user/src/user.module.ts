@@ -1,15 +1,18 @@
 import { Module } from '@nestjs/common';
 import { UserService } from './user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AccountEntity } from './entities/account.entity';
-import { UserEntity } from './entities/user.entity';
-import { ProfileEntity } from './entities/profile.entity';
+import { MongooseModule } from '@nestjs/mongoose';
+import { User, UserSchema } from './schemas/user.schema';
+import { Profile, ProfileSchema } from './schemas/profile.schema';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AccountEntity, UserEntity, ProfileEntity]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Profile.name, schema: ProfileSchema },
+    ]),
   ],
   providers: [UserService],
-  exports: [UserService],
+  exports: [UserService], // AuthModule import được
 })
 export class UserModule {}

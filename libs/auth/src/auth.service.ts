@@ -1,148 +1,112 @@
+// auth/auth.service.ts
 import {
   ConflictException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { LoginDto } from './dto/login.dto';
-import { JwtService } from '@nestjs/jwt';
-import { TokensDto } from './dto/tokens.dto';
 import * as bcrypt from 'bcrypt';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { AccountEntity } from 'y/user/entities/account.entity';
-import { DataSource } from 'typeorm';
-import { PayloadDto } from './dto/payload.dto';
+import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RegisterDto } from './dto/register.dto';
-import { Role } from 'y/user/enums/role.enum';
+import { TokensDto } from './dto/tokens.dto';
+import { PayloadDto } from './dto/payload.dto';
+import { UserService } from '@app/user';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    @InjectDataSource() private readonly dataSource: DataSource, // @InjectRepository(AccountEntity) // private readonly accountRepository: Repository<AccountEntity>,
   ) {}
 
-  async findByEmail(email: string) {
-    const repo = this.dataSource.getRepository(AccountEntity);
-    return repo.findOne({ where: { email } });
+  // ── Passport Local Strategy gọi ──────────────────────
+  async validateUser(email: string, password: string) {
+    const user = await this.userService.findByEmail(email);
+    if (!user) return null;
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return null;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...safeUser } = user.toObject();
+    return safeUser; // → gắn vào req.user bởi LocalStrategy
   }
 
-  public async login(input: LoginDto): Promise<TokensDto> {
-    const findUser = await this.findByEmail(input.email);
-    if (!findUser) {
-      throw new UnauthorizedException('Email or password is invalid');
-    }
+  // ── Gọi sau khi LocalStrategy validate thành công ────
+  async login(user: any): Promise<TokensDto> {
+    const payload: PayloadDto = {
+      userId: user._id.toString(),
+      email: user.email,
+    };
+    const tokens = await this.generateTokens(payload);
 
-    const checkPass = await this.comparePassword(
-      input.password,
-      findUser.password,
+    // lưu raw refresh token vào DB
+    await this.userService.saveRefreshToken(
+      user._id.toString(),
+      tokens.refreshToken,
     );
+    return tokens;
+  }
 
-    if (!checkPass) {
-      throw new UnauthorizedException('Password is incorrect');
-    }
+  async register(dto: RegisterDto): Promise<TokensDto> {
+    // userService.create đã check duplicate email/username
+    const user = await this.userService.create(dto);
 
     const payload: PayloadDto = {
-      email: input.email,
-      role: findUser.role,
+      userId: user._id.toString(),
+      email: user.email,
     };
+    const tokens = await this.generateTokens(payload);
 
-    const tokens: TokensDto = await this.getTokens(payload);
-
-    findUser.refreshToken = tokens.refreshToken;
-    await this.dataSource
-      .getRepository(AccountEntity)
-      .update({ email: findUser.email }, findUser);
-
+    await this.userService.saveRefreshToken(
+      user._id.toString(),
+      tokens.refreshToken,
+    );
     return tokens;
   }
 
-  public async register(input: RegisterDto): Promise<TokensDto> {
-    const findUser = await this.findByEmail(input.email);
+  async logout(userId: string): Promise<void> {
+    await this.userService.clearRefreshToken(userId);
+  }
 
-    if (findUser) {
-      throw new ConflictException('User already exists'); // ném lỗi
-    }
+  async refreshTokens(
+    userId: string,
+    refreshToken: string,
+  ): Promise<TokensDto> {
+    const user = await this.userService.findByIdWithRefreshToken(userId);
+    if (!user || !user.refreshToken)
+      throw new UnauthorizedException('Access denied');
 
-    input.password = await bcrypt.hash(input.password, 12); // hash pass
+    // so sánh raw token
+    if (user.refreshToken !== refreshToken)
+      throw new UnauthorizedException('Refresh token invalid');
 
-    const newUser = this.dataSource.getRepository(AccountEntity).create(input);
-    await this.dataSource.getRepository(AccountEntity).save(newUser);
+    const payload: PayloadDto = {
+      userId: user._id.toString(),
+      email: user.email,
+    };
+    const tokens = await this.generateTokens(payload);
 
-    const tokens = await this.getTokens({
-      email: newUser.email,
-      role: Role.User,
-    });
-
-    await this.dataSource
-      .getRepository(AccountEntity)
-      .update({ email: newUser.email }, { refreshToken: tokens.refreshToken });
+    await this.userService.saveRefreshToken(
+      user._id.toString(),
+      tokens.refreshToken,
+    );
     return tokens;
   }
 
-  public async logout(email: string): Promise<boolean> {
-    const findUser = await this.dataSource
-      .getRepository(AccountEntity)
-      .findOne({
-        where: {
-          email: email,
-        },
-      });
-
-    if (!findUser) {
-      throw new UnauthorizedException('Email or password is invalid');
-    }
-
-    await this.dataSource
-      .getRepository(AccountEntity)
-      .update({ email }, { refreshToken: null });
-
-    console.log(`${email} đã đăng xuất!`);
-    return true;
-  }
-
-  //function compare password param with user password in database
-  private async comparePassword(
-    password: string,
-    storePasswordHash: string,
-  ): Promise<any> {
-    return await bcrypt.compare(password, storePasswordHash);
-  }
-
-  // gettoken -> [access,refresh] -> create sign
-  private async getTokens(payload: PayloadDto): Promise<TokensDto> {
+  // ── Private ───────────────────────────────────────────
+  private async generateTokens(payload: PayloadDto): Promise<TokensDto> {
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(
-        { payload },
-        {
-          secret: this.configService.get<string>('JWT_SECRET_KEY'),
-          expiresIn: 60 * 60, // 1h
-        },
-      ),
-      this.jwtService.signAsync(
-        { payload },
-        {
-          secret: this.configService.get<string>('REFRESH_JWT_SECRET_KEY'),
-          expiresIn: 60 * 60 * 24, // 1 day
-        },
-      ),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+        expiresIn: '1h',
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        expiresIn: '7d',
+      }),
     ]);
-
     return { accessToken, refreshToken };
-  }
-
-  async validateUser(username: string, pass: string) {
-    const user = await this.dataSource.getRepository(AccountEntity).findOne({
-      where: {
-        email: username,
-      },
-    });
-
-    if (user && user.password === pass) {
-      const { password, ...result } = user;
-      return result;
-    }
-    return null;
   }
 }

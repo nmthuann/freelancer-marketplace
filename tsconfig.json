@@ -30,22 +30,22 @@
       "@app/database/*": [
         "libs/database/src/*"
       ],
-      "y/user": [
+      "@app/user": [
         "libs/user/src"
       ],
-      "y/user/*": [
+      "@app/user/*": [
         "libs/user/src/*"
       ],
-      "y/post": [
+      "@app/post": [
         "libs/post/src"
       ],
-      "y/post/*": [
+      "@app/post/*": [
         "libs/post/src/*"
       ],
-      "y/order": [
+      "@app/order": [
         "libs/order/src"
       ],
-      "y/order/*": [
+      "@app/order/*": [
         "libs/order/src/*"
       ],
       "@app/profile": [
@@ -59,6 +59,12 @@
       ],
       "@app/earn/*": [
         "libs/earn/src/*"
+      ],
+      "@app/mongo": [
+        "libs/mongo/src"
+      ],
+      "@app/mongo/*": [
+        "libs/mongo/src/*"
       ]
     }
   }

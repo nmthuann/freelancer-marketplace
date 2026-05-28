@@ -1,43 +1,32 @@
 import { AuthService } from '@app/auth';
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Request,
-  UsePipes,
-} from '@nestjs/common';
-import { Public } from 'apps/api-gateway/decorators/public.decorator';
-import { AccountPipeValidator } from 'apps/api-gateway/pipes/account.validator.pipe';
-import { AccountRequest } from './requests/account.request';
-import { LoginResponse } from './responses/login.response';
+import { RegisterDto } from '@app/auth/dto/register.dto';
+import { JwtAuthGuard } from '@app/auth/guards/jwt-auth.guard';
+import { LocalAuthGuard } from '@app/auth/guards/local-auth.guard';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-  @Public()
-  @Post('login')
-  @UsePipes(new AccountPipeValidator())
-  async login(@Body() loginDto: AccountRequest): Promise<LoginResponse> {
-    return await this.authService.login(loginDto);
-  }
 
-  @Public()
   @Post('register')
-  @UsePipes(new AccountPipeValidator())
-  async register(@Body() accountReq: AccountRequest) {
-    return await this.authService.register(accountReq);
+  register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
   }
 
-  //   @UseGuards(RolesGuard)
+  @UseGuards(LocalAuthGuard) // Passport gọi validateUser → gắn req.user
+  @Post('login')
+  login(@Req() req: any) {
+    return this.authService.login(req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('logout')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async logout(@Request() req: any) {
-    const email = req['email'];
-    const token = req['token'];
-    console.log('token', token);
-    await this.authService.logout(email);
-    return { message: 'Ban da dang xuat' };
+  logout(@Req() req: any) {
+    return this.authService.logout(req.user.userId);
+  }
+
+  @Post('refresh')
+  refresh(@Body() body: { userId: string; refreshToken: string }) {
+    return this.authService.refreshTokens(body.userId, body.refreshToken);
   }
 }

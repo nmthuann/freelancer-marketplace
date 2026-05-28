@@ -4,24 +4,20 @@ import { PayloadDto } from '../dto/payload.dto';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { AccountEntity } from 'y/user/entities/account.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(@InjectDataSource() private readonly dataSource: DataSource) {
+  constructor(configService: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET,
+      secretOrKey: configService.get<string>('JWT_ACCESS_SECRET_KEY'),
     });
   }
 
   async validate(payload: PayloadDto) {
-    return this.findByEmail(payload.email);
-  }
-
-  async findByEmail(email: string) {
-    const repo = this.dataSource.getRepository(AccountEntity);
-    return repo.findOne({ where: { email } });
+    return { userId: payload.userId, email: payload.email };
+    // gắn vào req.user
   }
 }
