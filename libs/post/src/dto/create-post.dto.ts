@@ -1,26 +1,27 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { CreatePackageDto } from './create-package.dto';
+import { PricingTypeEnum } from '../enums/pricing-type.enum';
 
 export class CreatePostDto {
-  @IsNotEmpty()
-  @IsString()
   title: string;
-
-  @IsNotEmpty()
-  @IsString()
   description: string;
-
-  @IsOptional()
-  @IsString()
-  FAQ?: string;
-
-  @IsOptional()
-  @IsString()
-  imageUrl?: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  categoryId: number;
-
-  packages: CreatePackageDto[];
+  category: string;
+  subCategory?: string;
+  tags?: string[];
+  pricingType: PricingTypeEnum;
+  packages: {
+    name: string;
+    description: string;
+    price: number;
+    deliveryDays: number;
+    revisions: number;
+    features?: string[];
+  }[];
+  gallery?: {
+    url: string;
+    type: 'image' | 'video' | 'pdf';
+    caption?: string;
+    thumbnailUrl?: string;
+  }[];
+  requirements?: string[];
+  portfolioUrl?: string;
+  languages?: string[];
 }

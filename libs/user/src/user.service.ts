@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -15,7 +16,11 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { SearchUsersDto } from './dto/search-users.dto';
 import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { RegisterDto } from '@app/auth/dto/register.dto';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { RegisterDto } from './dto/register.dto';
+import { TokensDto } from './dto/tokens.dto';
+import { PayloadDto } from './dto/payload.dto';
 
 @Injectable()
 export class UserService {
@@ -23,11 +28,75 @@ export class UserService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Profile.name)
     private readonly profileModel: Model<ProfileDocument>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   // ═══════════════════════════════════════════════
   // INTERNAL – AuthService dùng
   // ═══════════════════════════════════════════════
+
+  // ── Passport Local Strategy gọi ──────────────────────
+  async validateUser(email: string, password: string) {
+    const user = await this.findByEmail(email);
+    if (!user) return null;
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return null;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...safeUser } = user.toObject();
+    return safeUser; // → gắn vào req.user bởi LocalStrategy
+  }
+
+  async register(dto: RegisterDto): Promise<TokensDto> {
+    // userService.create đã check duplicate email/username
+    const user = await this.create(dto);
+
+    const payload: PayloadDto = {
+      userId: user._id.toString(),
+      email: user.email,
+    };
+    const tokens = await this.generateTokens(payload);
+
+    await this.saveRefreshToken(user._id.toString(), tokens.refreshToken);
+    return tokens;
+  }
+
+  async refreshTokens(
+    userId: string,
+    refreshToken: string,
+  ): Promise<TokensDto> {
+    const user = await this.findByIdWithRefreshToken(userId);
+    if (!user?.refreshToken) throw new UnauthorizedException('Access denied');
+
+    // so sánh raw token
+    if (user.refreshToken !== refreshToken)
+      throw new UnauthorizedException('Refresh token invalid');
+
+    const payload: PayloadDto = {
+      userId: user._id.toString(),
+      email: user.email,
+    };
+    const tokens = await this.generateTokens(payload);
+
+    await this.saveRefreshToken(user._id.toString(), tokens.refreshToken);
+    return tokens;
+  }
+
+  private async generateTokens(payload: PayloadDto): Promise<TokensDto> {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+        expiresIn: '1h',
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        expiresIn: '7d',
+      }),
+    ]);
+    return { accessToken, refreshToken };
+  }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).select('+password').exec();
