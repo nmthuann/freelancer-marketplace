@@ -11,11 +11,18 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
 @Module({
   imports: [
-    ClientsModule.register([
+    ClientsModule.registerAsync([
       {
-        name: 'USERS_SERVICE',
-        transport: Transport.TCP,
-        options: { host: 'localhost', port: 3301 },
+        name: 'USER_SERVICE',
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: config.get<string>('USER_SERVICE_HOST', 'localhost'),
+            port: parseInt(config.get<string>('USER_SERVICE_PORT', '3301'), 10),
+          },
+        }),
       },
     ]),
     PassportModule,

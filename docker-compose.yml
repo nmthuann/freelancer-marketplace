@@ -1,54 +1,99 @@
-version: '3.8'
-services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: freelancer
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+# docker-compose cho Freelancer Marketplace (microservice)
+#
+#   mongo          — 1 instance, mỗi service dùng 1 dbName RIÊNG (database-per-service)
+#   api-gateway    — HTTP  :3300  (điểm vào duy nhất, Swagger tại /api-docs)
+#   user-service   — TCP   :3301  (nội bộ)
+#   post-service   — TCP   :3302  (nội bộ)
+#   order-service  — TCP   :3303  (nội bộ)
+#
+# Chạy:   docker compose up --build
+# Seed:   mongo mở cổng 27017 ra host → chạy `npm run seed` ở máy host.
 
-  redis:
-    image: redis:7
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
     ports:
-      - "6379:6379"
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   user-service:
     build:
       context: .
-      dockerfile: apps/user/Dockerfile
+      dockerfile: Dockerfile
+      args:
+        SERVICE: user-service
+    restart: unless-stopped
     environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: postgres
-      DATABASE_NAME: freelancer
-      PORT: 3001
-    ports:
-      - "3001:3001"
+      USER_MONGO_URI: mongodb://mongo:27017
+      USER_MONGO_DB_NAME: fm_user_db
+      USER_SERVICE_PORT: 3301
+      JWT_ACCESS_SECRET_KEY: ${JWT_ACCESS_SECRET_KEY:-dev_access_secret}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY:-dev_refresh_secret}
     depends_on:
-      - postgres
-      - redis
+      mongo:
+        condition: service_healthy
+
+  post-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: post-service
+    restart: unless-stopped
+    environment:
+      POST_MONGO_URI: mongodb://mongo:27017
+      POST_MONGO_DB_NAME: fm_post_db
+      POST_SERVICE_PORT: 3302
+    depends_on:
+      mongo:
+        condition: service_healthy
 
   order-service:
     build:
       context: .
-      dockerfile: apps/order/Dockerfile
+      dockerfile: Dockerfile
+      args:
+        SERVICE: order-service
+    restart: unless-stopped
     environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: 5432
-      DATABASE_USERNAME: postgres
-      DATABASE_PASSWORD: postgres
-      DATABASE_NAME: freelancer
-      PORT: 3002
-    ports:
-      - "3002:3002"
+      ORDER_MONGO_URI: mongodb://mongo:27017
+      ORDER_MONGO_DB_NAME: fm_order_db
+      ORDER_SERVICE_PORT: 3303
     depends_on:
-      - postgres
-      - redis
+      mongo:
+        condition: service_healthy
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: api-gateway
+    restart: unless-stopped
+    ports:
+      - '3300:3300'
+    environment:
+      PORT: 3300
+      JWT_ACCESS_SECRET_KEY: ${JWT_ACCESS_SECRET_KEY:-dev_access_secret}
+      JWT_REFRESH_SECRET_KEY: ${JWT_REFRESH_SECRET_KEY:-dev_refresh_secret}
+      # Địa chỉ các microservice trong mạng compose (service name = hostname)
+      USER_SERVICE_HOST: user-service
+      USER_SERVICE_PORT: 3301
+      POST_SERVICE_HOST: post-service
+      POST_SERVICE_PORT: 3302
+      ORDER_SERVICE_HOST: order-service
+      ORDER_SERVICE_PORT: 3303
+    depends_on:
+      - user-service
+      - post-service
+      - order-service
 
 volumes:
-  pgdata:
+  mongo_data:

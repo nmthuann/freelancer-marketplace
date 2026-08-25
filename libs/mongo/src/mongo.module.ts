@@ -1,21 +1,34 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import {
-  MONGO_MODULE_OPTIONS,
-  MongoModuleClass,
-  MongoModuleOptions,
-} from './mongo.module-definition';
+import { MongoModuleOptions } from './mongo.module-definition';
 
-@Module({
-  imports: [
-    MongooseModule.forRootAsync({
-      inject: [MONGO_MODULE_OPTIONS],
-      useFactory: (options: MongoModuleOptions) => ({
-        uri: options.uri,
-        dbName: options.dbName,
-      }),
-    }),
-  ],
-  exports: [MongooseModule],
-})
-export class MongoModule extends MongoModuleClass {}
+interface MongoModuleAsyncOptions {
+  useFactory: (
+    ...args: any[]
+  ) => MongoModuleOptions | Promise<MongoModuleOptions>;
+  inject?: any[];
+}
+
+/**
+ * Wrapper mỏng quanh MongooseModule.forRootAsync.
+ * Nhận useFactory/inject của caller (thường inject ConfigService — global),
+ * nên options token được resolve đúng trong context của MongooseCoreModule.
+ */
+@Module({})
+export class MongoModule {
+  static forRootAsync(options: MongoModuleAsyncOptions): DynamicModule {
+    return {
+      module: MongoModule,
+      imports: [
+        MongooseModule.forRootAsync({
+          useFactory: async (...args: any[]) => {
+            const opts = await options.useFactory(...args);
+            return { uri: opts.uri, dbName: opts.dbName };
+          },
+          inject: options.inject ?? [],
+        }),
+      ],
+      exports: [MongooseModule],
+    };
+  }
+}

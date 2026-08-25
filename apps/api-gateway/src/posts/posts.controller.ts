@@ -9,7 +9,7 @@ import {
   Get,
 } from '@nestjs/common';
 import { PostsClientProxy } from './post-client.proxy';
-import { JwtAuthGuard } from 'apps/api-gateway/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../users/guards/jwt-auth.guard';
 import { CreatePostInterceptor } from 'apps/api-gateway/interceptors/create-post.interceptor';
 import { CreatePostRequest } from './requests/create-post.request';
 import { UserRequest } from '../users/requests/user.request';

@@ -21,8 +21,11 @@ export class AppController {
   }
 
   @MessagePattern('auth.save_refresh_token')
-  saveRefreshToken(@Payload() data: { userId: string; token: string }) {
-    return this.userService.refreshTokens(data.userId, data.token);
+  async saveRefreshToken(@Payload() data: { userId: string; token: string }) {
+    await this.userService.saveRefreshToken(data.userId, data.token);
+    // phải trả về giá trị: handler void làm observable RPC complete mà không
+    // emit → firstValueFrom ở gateway ném EmptyError.
+    return { success: true };
   }
 
   //   @MessagePattern('auth.clear_refresh_token')
