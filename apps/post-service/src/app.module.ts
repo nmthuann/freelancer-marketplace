@@ -12,8 +12,8 @@ import { MongoModule } from '@app/mongo';
 
     MongoModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
-        uri: config.get('MONGO_URI'),
-        dbName: config.get('MONGO_DB_NAME'),
+        uri: config.get('POST_MONGO_URI'),
+        dbName: config.get('POST_MONGO_DB_NAME'),
       }),
       inject: [ConfigService],
     }),
@@ -23,4 +23,4 @@ import { MongoModule } from '@app/mongo';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class PostServiceModule {}

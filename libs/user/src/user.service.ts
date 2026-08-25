@@ -75,7 +75,7 @@ export class UserService {
       throw new UnauthorizedException('Refresh token invalid');
 
     const payload: PayloadDto = {
-      userId: user._id.toString(),
+      userId: user._id.id.toString(),
       email: user.email,
     };
     const tokens = await this.generateTokens(payload);
@@ -87,11 +87,11 @@ export class UserService {
   private async generateTokens(payload: PayloadDto): Promise<TokensDto> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_ACCESS_SECRET'),
+        secret: this.configService.get<string>('JWT_ACCESS_SECRET_KEY'),
         expiresIn: '1h',
       }),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET_KEY'),
         expiresIn: '7d',
       }),
     ]);

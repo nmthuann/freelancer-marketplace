@@ -12,8 +12,8 @@ import { AppController } from './app.controller';
 
     MongoModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
-        uri: config.get('MONGO_URI'),
-        dbName: config.get('MONGO_DB_NAME'),
+        uri: config.get('USER_MONGO_URI'),
+        dbName: config.get('USER_MONGO_DB_NAME'),
       }),
       inject: [ConfigService],
     }),
